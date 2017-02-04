@@ -83,7 +83,13 @@ public class SwarmSlave extends Slave implements EphemeralNode {
             final Slave node = computer.getNode();
             if (node != null) {
                 try {
-                    Jenkins.getInstance().removeNode(node);
+                    Jenkins jenkins = Jenkins.getInstance();
+                    synchronized (jenkins) {
+                        // removeNode will acquire a queue lock and then sync on jenkins
+                        // in doCreateSlave we sync on jenkins and then acquire a queue lock
+                        // -> potential for deadlock, so we'll already sync on jenkins here
+                        jenkins.removeNode(node);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace(listener.error(e.getMessage()));
                 }
