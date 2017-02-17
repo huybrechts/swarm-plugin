@@ -1,5 +1,6 @@
 package hudson.plugins.swarm;
 
+import com.google.common.io.Files;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
@@ -28,12 +29,20 @@ public class Client {
     private Thread labelFileWatcherThread = null;
 
     public static void main(String... args) throws InterruptedException, IOException {
+        try {
+            new SwarmWindowsService("jenkins-agent", args).init();
+        } catch (Throwable e) {
+            runMain(args);
+        }
+    }
+
+    public static void runMain(String... args) throws InterruptedException, IOException {
         String s = Arrays.toString(args);
         s = s.replaceAll("\n","");
         s = s.replaceAll("\r","");
         s = s.replaceAll(",", "");
         logger.info("Client.main invoked with: " + s);
-        
+
         Options options = new Options();
         Client client = new Client(options);
         CmdLineParser p = new CmdLineParser(options);

@@ -16,8 +16,8 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -76,6 +76,11 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.agfa.hap.utilities</groupId>
+            <artifactId>com.agfa.hap.win32</artifactId>
+            <version>1.0.0.v20170215_0822</version>
         </dependency>
     </dependencies>
 </project>
