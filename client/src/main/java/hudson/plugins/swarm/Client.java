@@ -1,12 +1,13 @@
 package hudson.plugins.swarm;
 
 import com.agfa.hap.win32.winsvc.ServiceUtils;
-import com.google.common.io.Files;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
@@ -33,9 +34,9 @@ public class Client {
     private Thread labelFileWatcherThread = null;
 
     public static void main(String... args) throws InterruptedException, IOException, URISyntaxException {
+        String jar = new File(Client.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getAbsolutePath();
         if (args[0].equals("install")) {
             String java = System.getProperty("java.home") + "\\bin\\java.exe";
-            String jar = new File(Client.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getAbsolutePath();
             String arguments = Arrays.stream(args, 1, args.length)
                     .map(it -> (it.contains(" ") || it.contains("\"")) ? '"' + it + '"' : it)
                     .collect(Collectors.joining(" "));
@@ -57,7 +58,14 @@ public class Client {
 
 
         } else {
+            File logFile = new File(new File(jar).getParentFile(), "swarm-" + System.currentTimeMillis() + ".log");
+            FileOutputStream fos = new FileOutputStream(logFile);
+            TeeOutputStream os = new TeeOutputStream(fos, System.out);
+            System.setOut(new PrintStream(os, true));
+            System.setErr(new PrintStream(os, true));
+
             try {
+
                 new SwarmWindowsService("jenkins-agent", args).init();
             } catch (Throwable e) {
                 // not running a service
