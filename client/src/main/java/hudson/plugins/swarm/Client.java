@@ -1,5 +1,6 @@
 package hudson.plugins.swarm;
 
+import com.agfa.hap.win32.winsvc.ServiceUtils;
 import com.google.common.io.Files;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -7,10 +8,13 @@ import org.kohsuke.args4j.CmdLineParser;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.logging.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Swarm client.
@@ -28,11 +32,37 @@ public class Client {
     protected final Options options;
     private Thread labelFileWatcherThread = null;
 
-    public static void main(String... args) throws InterruptedException, IOException {
-        try {
-            new SwarmWindowsService("jenkins-agent", args).init();
-        } catch (Throwable e) {
-            runMain(args);
+    public static void main(String... args) throws InterruptedException, IOException, URISyntaxException {
+        if (args[0].equals("install")) {
+            String java = System.getProperty("java.home") + "\\bin\\java.exe";
+            String jar = new File(Client.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getAbsolutePath();
+            String arguments = Arrays.stream(args, 1, args.length)
+                    .map(it -> (it.contains(" ") || it.contains("\"")) ? '"' + it + '"' : it)
+                    .collect(Collectors.joining(" "));
+
+            String commandLine = "\"" + java + "\" -jar \"" + jar + "\" " + arguments;
+
+            ServiceUtils.createService(
+                    "jenkins-swarm",
+                    "Jenkins Swarm Agent",
+                    "Jenkins Swarm Agent",
+                    null,
+                    null,
+                    null,
+                    commandLine,
+                    ServiceUtils.StartType.SERVICE_DELAYED_AUTO_START,
+                    false,
+                    null
+            );
+
+
+        } else {
+            try {
+                new SwarmWindowsService("jenkins-agent", args).init();
+            } catch (Throwable e) {
+                // not running a service
+                runMain(args);
+            }
         }
     }
 
@@ -42,7 +72,38 @@ public class Client {
         s = s.replaceAll("\r","");
         s = s.replaceAll(",", "");
         logger.info("Client.main invoked with: " + s);
+        
+        List<String> list = Arrays.asList(args);
+        int i = list.indexOf("--");
+        if (i >= 0) {
+            int counter = 0;
+            while (true) {
+                runSingleThread("Connection-" + counter++, list.subList(0, i));
+                if (i == list.size()) break;
+                list = list.subList(i + 1, list.size());
+                i = list.indexOf("--");
+                if (i < 0) i = list.size();
+            }
+        } else {
+            runSingle(list, true);
+        }
 
+    }
+    
+    private static void runSingleThread(String name, final List<String> args) {
+        new Thread(name) {
+            @Override
+            public void run() {
+                try {
+                    runSingle(args, false);
+                } catch (InterruptedException e) {
+                    // exit
+                }
+            }
+        }.start();
+    }
+
+    private static void runSingle(List<String> args, boolean allowExit) throws InterruptedException {
         Options options = new Options();
         Client client = new Client(options);
         CmdLineParser p = new CmdLineParser(options);
@@ -54,17 +115,17 @@ public class Client {
             p.printUsage(System.out);
             System.exit(-1);
         }
-        
+
         if (options.help) {
             p.printUsage(System.out);
             System.exit(0);
         }
-        
+
         if(options.logFile != null) {
             logger.severe("-logFile has been deprecated.  Use logging properties file syntax instead: -Djava.util.logging.config.file=" + Paths.get("").toAbsolutePath().toString() + File.separator + "logging.properties");
             System.exit(-1);
         }
-        
+
         // Check to see if passwordEnvVariable is set, if so pull down the
         // password from the env and set as password.
         if (options.passwordEnvVariable != null) {
@@ -95,7 +156,7 @@ public class Client {
         }
 
         SwarmClient swarmClient = new SwarmClient(options);
-        client.run(swarmClient, args); // pass the command line arguments along so that the LabelFileWatcher thread can have them
+        client.run(swarmClient, args.toArray(new String[0])); // pass the command line arguments along so that the LabelFileWatcher thread can have them
     }
 
     public Client(Options options) {

@@ -39,6 +39,11 @@ import java.nio.file.Paths;
 import java.util.logging.*;
 
 public class SwarmClient {
+
+    static {
+        System.setProperty("winp.folder.preferred", new File(System.getProperty("user.home"), "winp.dll").getAbsolutePath());
+    }
+
     private static final Logger logger =  Logger.getLogger(SwarmClient.class.getPackage().getName());
     private final Options options;
     private final String hash;
@@ -292,6 +297,12 @@ public class SwarmClient {
                 args.add("-credentials");
                 args.add(options.username + ":" + options.password);
             }
+
+            if (options.jarCache != null) {
+                args.add("-jar-cache");
+                args.add(options.jarCache.toString());
+            }
+
             args.add("-headless");
             args.add("-noreconnect");
 

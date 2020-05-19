@@ -75,7 +75,7 @@ public class Options {
                     "jobs only). Default is " + ModeOptionHandler.NORMAL + ".",
             handler = ModeOptionHandler.class
     )
-    public String mode = ModeOptionHandler.NORMAL;
+    public String mode = ModeOptionHandler.EXCLUSIVE;
     
     @Option(
             name = "-t", aliases = "--toolLocation",
@@ -107,5 +107,9 @@ public class Options {
     
     @Option(name = "-logFile", usage="File to write STDOUT and STDERR to. (Deprecated, use -Djava.util.logging.config.file={path}logging.properties instead)")
     public String logFile;
-    
+
+    @Option(name="-jar-cache",metaVar="DIR",usage="Cache directory that stores jar files sent from the master")
+    public File jarCache = null;
+
+
 }
