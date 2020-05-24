@@ -49,6 +49,9 @@ public class Client {
 
             commandLine +=  " -jar \"" + jar + "\" " + arguments;
 
+            System.out.println("installing service jenkins-swarm");
+            System.out.println("command line: " + commandLine);
+
             ServiceUtils.createService(
                     "jenkins-swarm",
                     "Jenkins Swarm Agent",
