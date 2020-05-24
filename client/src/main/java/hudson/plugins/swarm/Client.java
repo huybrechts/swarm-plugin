@@ -41,7 +41,13 @@ public class Client {
                     .map(it -> (it.contains(" ") || it.contains("\"")) ? '"' + it + '"' : it)
                     .collect(Collectors.joining(" "));
 
-            String commandLine = "\"" + java + "\" -jar \"" + jar + "\" " + arguments;
+            String commandLine = "\"" + java + "\"";
+
+            if (System.getProperty("vmargs") != null) {
+                commandLine += " " + System.getProperty("vmargs") + " ";
+            }
+
+            commandLine +=  " -jar \"" + jar + "\" " + arguments;
 
             ServiceUtils.createService(
                     "jenkins-swarm",
