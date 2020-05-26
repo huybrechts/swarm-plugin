@@ -41,7 +41,11 @@ import java.util.logging.*;
 public class SwarmClient {
 
     static {
-        System.setProperty("winp.folder.preferred", new File(System.getProperty("user.home"), "winp.dll").getAbsolutePath());
+        if (File.separatorChar ==  '\\') {
+            String winpFolder = new File(System.getProperty("user.home"), "winp.dll").getAbsolutePath();
+            System.setProperty("winp.folder.preferred", winpFolder);
+            new File(winpFolder).mkdirs();
+        }
     }
 
     private static final Logger logger =  Logger.getLogger(SwarmClient.class.getPackage().getName());

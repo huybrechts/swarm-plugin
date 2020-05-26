@@ -95,7 +95,7 @@
         <dependency>
             <groupId>org.jvnet.winp</groupId>
             <artifactId>winp</artifactId>
-            <version>1.22</version>
+            <version>1.28</version>
         </dependency>
 
     </dependencies>
