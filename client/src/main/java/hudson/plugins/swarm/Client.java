@@ -34,6 +34,10 @@ public class Client {
     private Thread labelFileWatcherThread = null;
 
     public static void main(String... args) throws InterruptedException, IOException, URISyntaxException {
+
+        System.setProperty("org.slf4j.simpleLogger.showDateTime", "true");
+        System.setProperty("org.slf4j.simpleLogger.dateTimeFormat", "YYYY/MM/dd HH:mm:ss.SSS");
+
         String jar = new File(Client.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getAbsolutePath();
         if (args[0].equals("install")) {
             String java = System.getProperty("java.home") + "\\bin\\java.exe";
@@ -227,17 +231,14 @@ public class Client {
                     logger.warning("Connection closed, exiting...");
                     swarmClient.exitWithStatus(0);
                 }
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "IOexception occurred", e);
-                e.printStackTrace();
-            } catch (ParserConfigurationException e) {
-                logger.log(Level.SEVERE, "ParserConfigurationException occurred", e);
-                e.printStackTrace();
             } catch (RetryException e) {
                 logger.log(Level.SEVERE, "RetryException occurred", e);
                 if (e.getCause() != null) {
                     e.getCause().printStackTrace();
                 }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "IOexception occurred", e);
+                e.printStackTrace();
             }
 
             int waitTime = options.retryBackOffStrategy.waitForRetry(retry++, options.retryInterval, options.maxRetryInterval);
